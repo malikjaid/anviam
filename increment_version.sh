@@ -9,10 +9,10 @@ CURRENT_BRANCH=$(git branch --show-current)
 # Set initial version based on branch
 if [ "$CURRENT_BRANCH" == "main" ]; then
     VERSION_FILE="version-main.php"
-    INITIAL_VERSION="220.0.0-main"
+    INITIAL_VERSION="2200.0.0-main"
 elif [ "$CURRENT_BRANCH" == "malikt" ]; then
     VERSION_FILE="version-malikt.php"
-    INITIAL_VERSION="230.0.0-malikt"
+    INITIAL_VERSION="2300.0.0-malikt"
 else
     VERSION_FILE="version-$CURRENT_BRANCH.php"
     INITIAL_VERSION="1223.0.0-$CURRENT_BRANCH"
