@@ -11,7 +11,7 @@ if [ "$CURRENT_BRANCH" == "main" ]; then
     VERSION_FILE="version-main.php"
     INITIAL_VERSION="220.0.0"
 elif [ "$CURRENT_BRANCH" == "malikt" ]; then
-    VERSION_FILE="version-dev.php"
+    VERSION_FILE="version-malikt.php"
     INITIAL_VERSION="230.1.0-beta"
 else
     VERSION_FILE="version-$CURRENT_BRANCH.php"
