@@ -10,46 +10,40 @@ CURRENT_BRANCH=$(git branch --show-current)
 case "$CURRENT_BRANCH" in
     "main")
         VERSION_FILE="version-main.php"
-        INITIAL_VERSION=""
         ;;
     "malikt")
         VERSION_FILE="version-malikt.php"
-        INITIAL_VERSION=""
         ;;
     *)
-        VERSION_FILE="version-$CURRENT_BRANCH.php"
-        INITIAL_VERSION="9999.0.0"
+        echo "Error: Unsupported branch '$CURRENT_BRANCH'. Exiting."
+        exit 1
         ;;
 esac
 
-# Use the initial version if specified; otherwise, continue from the latest tag
-if [ -n "$INITIAL_VERSION" ]; then
-    NEW_VERSION="$INITIAL_VERSION"
-    INITIAL_VERSION=""  # Resetting for future runs
+# Get the latest tag for the current branch
+LATEST_TAG=$(git tag --list "v*-$CURRENT_BRANCH" | sort -V | tail -n1)
+
+if [ -z "$LATEST_TAG" ]; then
+    # Initialize version if no tags exist
+    MAJOR=0
+    MINOR=0
+    PATCH=0
 else
-    # Get the latest tag for the current branch
-    LATEST_TAG=$(git tag --list "v*" | grep "$CURRENT_BRANCH" | sort -V | tail -n1)
+    # Extract the version numbers from the tag
+    IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG#v}"
+    PATCH_PART=${VERSION_PARTS[2]}
+    IFS='-' read -r -a PATCH_VERSION <<< "$PATCH_PART"
 
-    if [ -z "$LATEST_TAG" ]; then
-        # Initialize version if no tags exist
-        MAJOR=0
-        MINOR=0
-        PATCH=0
-    else
-        # Extract the version numbers from the tag
-        IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG:1}"
-
-        MAJOR=${VERSION_PARTS[0]}
-        MINOR=${VERSION_PARTS[1]}
-        PATCH=${VERSION_PARTS[2]}
-    fi
-
-    # Increment the patch version
-    PATCH=$((PATCH + 1))
-
-    # Form the new version string
-    NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+    MAJOR=${VERSION_PARTS[0]}
+    MINOR=${VERSION_PARTS[1]}
+    PATCH=${PATCH_VERSION[0]}
 fi
+
+# Increment the patch version
+PATCH=$((PATCH + 1))
+
+# Form the new version string
+NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
 # Form the new tag
 NEW_TAG="v$NEW_VERSION-$CURRENT_BRANCH"
@@ -62,9 +56,7 @@ fi
 
 # Update the version file with the new version
 if [ -f "$VERSION_FILE" ]; then
-    echo "$VERSION_FILE found."
-    # Update the version in the PHP file
-    sed -i "s/\(\$version\s*=\s*'\)[vV]*[0-9]\+\.[0-9]\+\.[0-9]\+\(';.*\)/\1$NEW_VERSION\2/" "$VERSION_FILE"
+    sed -i "s/\(\$version\s*=\s*'\)[vV]*[0-9]\+\.[0-9]\+\.[0-9]\+\('-.*\)/\1$NEW_VERSION\2/" "$VERSION_FILE"
     echo "Updated $VERSION_FILE with version: $NEW_VERSION"
 else
     echo "Error: $VERSION_FILE not found!"
@@ -82,7 +74,7 @@ git push origin "$CURRENT_BRANCH"
 git tag -a "$NEW_TAG" -m "$NEW_TAG"
 git push origin "$NEW_TAG"
 
-# Create release notes
+# Generate release notes
 RELEASE_BODY=$(conventional-changelog -p angular -i CHANGELOG.md -s -r 0)
 
 # Fetch the latest commit messages since the last tag, excluding version file updates
@@ -97,3 +89,4 @@ fi
 
 # Create a new release with the combined notes
 gh release create "$NEW_TAG" --notes "$RELEASE_NOTES"
+
