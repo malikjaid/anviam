@@ -6,43 +6,33 @@ git fetch --tags
 # Determine the current branch
 CURRENT_BRANCH=$(git branch --show-current)
 
-# Set version file and initial version based on the branch
-case "$CURRENT_BRANCH" in
-    "main")
-        VERSION_FILE="version-main.php"
-        INITIAL_VERSION="22022.0.0"
-        ;;
-    "malikt")
-        VERSION_FILE="version-malikt.php"
-        INITIAL_VERSION=""
-        ;;
-    *)
-        VERSION_FILE="version-$CURRENT_BRANCH.php"
-        INITIAL_VERSION="9999.0.0"
-        ;;
-esac
+# Set initial version based on branch
+if [ "$CURRENT_BRANCH" == "malikt" ]; then
+    VERSION_FILE="version-main.php"
+    INITIAL_VERSION="220.0.0"
+elif [ "$CURRENT_BRANCH" == "main" ]; then
+    VERSION_FILE="version-dev.php"
+    INITIAL_VERSION="230.1.0"
+else
+    VERSION_FILE="version-$CURRENT_BRANCH.php"
+    INITIAL_VERSION="1223.0.0-$CURRENT_BRANCH"
+fi
 
-# Use the initial version if specified; otherwise, continue from the latest tag
+# Check if an initial version is set via an environment variable or a specific file
 if [ -n "$INITIAL_VERSION" ]; then
     NEW_VERSION="$INITIAL_VERSION"
-    INITIAL_VERSION=""  # Resetting for future runs
+    # Reset INITIAL_VERSION after the first run
+    INITIAL_VERSION=""
 else
     # Get the latest tag for the current branch
-    LATEST_TAG=$(git tag --list "v*" | grep "$CURRENT_BRANCH" | sort -V | tail -n1)
+    LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
 
-    if [ -z "$LATEST_TAG" ]; then
-        # Initialize version if no tags exist
-        MAJOR=0
-        MINOR=0
-        PATCH=0
-    else
-        # Extract the version numbers from the tag
-        IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG:1}"
+    # Extract the version numbers from the tag
+    IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG:1}"
 
-        MAJOR=${VERSION_PARTS[0]}
-        MINOR=${VERSION_PARTS[1]}
-        PATCH=${VERSION_PARTS[2]}
-    fi
+    MAJOR=${VERSION_PARTS[0]}
+    MINOR=${VERSION_PARTS[1]}
+    PATCH=${VERSION_PARTS[2]}
 
     # Increment the patch version
     PATCH=$((PATCH + 1))
@@ -52,13 +42,15 @@ else
 fi
 
 # Form the new tag
-NEW_TAG="v$NEW_VERSION-$CURRENT_BRANCH"
+NEW_TAG="v$NEW_VERSION"
 
-# Check if the new tag already exists and handle the error
-if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-    echo "Error: Tag '$NEW_TAG' already exists."
-    exit 1
-fi
+# Check if the new tag already exists and increment if necessary
+while git rev-parse "$NEW_TAG" >/dev/null 2>&1; do
+    echo "Tag '$NEW_TAG' already exists. Incrementing version."
+    PATCH=$((PATCH + 1))
+    NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+    NEW_TAG="v$NEW_VERSION"
+done
 
 # Update the version file with the new version
 if [ -f "$VERSION_FILE" ]; then
