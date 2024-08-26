@@ -12,7 +12,7 @@ if [ "$CURRENT_BRANCH" == "main" ]; then
     INITIAL_VERSION="220.0.0"
 elif [ "$CURRENT_BRANCH" == "malikt" ]; then
     VERSION_FILE="version-malikt.php"
-    INITIAL_VERSION="230.1.0-beta"
+    INITIAL_VERSION=""
 else
     VERSION_FILE="version-$CURRENT_BRANCH.php"
     INITIAL_VERSION="1223.0.0-$CURRENT_BRANCH"
