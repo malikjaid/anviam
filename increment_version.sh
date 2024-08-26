@@ -30,13 +30,7 @@ if [ -z "$LATEST_TAG" ]; then
     PATCH=0
 else
     # Extract the version numbers from the tag
-    IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG#v}"
-    PATCH_PART=${VERSION_PARTS[2]}
-    IFS='-' read -r -a PATCH_VERSION <<< "$PATCH_PART"
-
-    MAJOR=${VERSION_PARTS[0]}
-    MINOR=${VERSION_PARTS[1]}
-    PATCH=${PATCH_VERSION[0]}
+    IFS='.-' read -r MAJOR MINOR PATCH BRANCH <<< "${LATEST_TAG#v}"
 fi
 
 # Increment the patch version
@@ -78,7 +72,7 @@ git push origin "$NEW_TAG"
 RELEASE_BODY=$(conventional-changelog -p angular -i CHANGELOG.md -s -r 0)
 
 # Fetch the latest commit messages since the last tag, excluding version file updates
-COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges | grep -v "chore: Update version to")
+COMMITS=$(git log "$LATEST_TAG"..HEAD --pretty=format:"%h %s" --no-merges | grep -v "chore: Update version to")
 
 # Combine the release notes and commit messages, ensuring proper formatting
 if [[ -z "$COMMITS" ]]; then
