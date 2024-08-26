@@ -30,13 +30,13 @@ if [ -z "$LATEST_TAG" ]; then
     PATCH=0
 else
     # Extract the version numbers from the tag
-    VERSION_PART="${LATEST_TAG%%-$CURRENT_BRANCH}"
-    VERSION_PART="${VERSION_PART#v}"
-    IFS='.' read -r -a VERSION_PARTS <<< "$VERSION_PART"
+    IFS='.' read -r -a VERSION_PARTS <<< "${LATEST_TAG#v}"
+    PATCH_PART=${VERSION_PARTS[2]}
+    IFS='-' read -r -a PATCH_VERSION <<< "$PATCH_PART"
 
     MAJOR=${VERSION_PARTS[0]}
     MINOR=${VERSION_PARTS[1]}
-    PATCH=${VERSION_PARTS[2]}
+    PATCH=${PATCH_VERSION[0]}
 fi
 
 # Increment the patch version
@@ -56,7 +56,36 @@ fi
 
 # Update the version file with the new version
 if [ -f "$VERSION_FILE" ]; then
-    sed -i "s/\(\$version\s*=\s*'\)[^']*\('.*\)/\1$NEW_VERSION-$CURRENT_BRANCH\2/" "$VERSION_FILE"
-    echo "Updated $VERSION_FILE with version: $NEW_VERSION-$CURRENT_BRANCH"
+    sed -i "s/\(\$version\s*=\s*'\)[vV]*[0-9]\+\.[0-9]\+\.[0-9]\+\('-.*\)/\1$NEW_VERSION\2/" "$VERSION_FILE"
+    echo "Updated $VERSION_FILE with version: $NEW_VERSION"
 else
-    echo "Error: $VERSION
+    echo "Error: $VERSION_FILE not found!"
+    exit 1
+fi
+
+# Commit the updated version file
+git add "$VERSION_FILE"
+git commit -m "chore: Update version to $NEW_VERSION in $VERSION_FILE"
+
+# Push the changes to the current branch
+git push origin "$CURRENT_BRANCH"
+
+# Tag and create a new release
+git tag -a "$NEW_TAG" -m "$NEW_TAG"
+git push origin "$NEW_TAG"
+
+# Generate release notes
+RELEASE_BODY=$(conventional-changelog -p angular -i CHANGELOG.md -s -r 0)
+
+# Fetch the latest commit messages since the last tag, excluding version file updates
+COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges | grep -v "chore: Update version to")
+
+# Combine the release notes and commit messages, ensuring proper formatting
+if [[ -z "$COMMITS" ]]; then
+    RELEASE_NOTES="$RELEASE_BODY"
+else
+    RELEASE_NOTES="$RELEASE_BODY"$'\n\n'"$COMMITS"
+fi
+
+# Create a new release with the combined notes
+gh release create "$NEW_TAG" --notes "$RELEASE_NOTES"
