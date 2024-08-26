@@ -3,7 +3,7 @@
 # Fetch all tags from remote
 git fetch --tags
 
-INITIAL_VERSION="0.0.1"         # Set this to "2.0.0" only for the first run
+INITIAL_VERSION="1010110.0.1"         # Set this to "2.0.0" only for the first run
 VERSION_FILE="version.php"
 
 if [ -n "$INITIAL_VERSION" ]; then
