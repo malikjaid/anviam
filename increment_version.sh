@@ -4,7 +4,7 @@
 git fetch --tags
 
 # Check if an initial version is set via an environment variable or a specific file
-INITIAL_VERSION="90000.0.0"         # Set this to "2.0.0" only for the first run
+INITIAL_VERSION=""         # Set this to "2.0.0" only for the first run
 VERSION_FILE="version.php"
 
 # Use the initial version if specified; otherwise, continue from the latest tag
