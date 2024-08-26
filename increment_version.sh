@@ -10,7 +10,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 case "$CURRENT_BRANCH" in
     "main")
         VERSION_FILE="version-main.php"
-        INITIAL_VERSION="9999.0.1"
+        INITIAL_VERSION=""
         ;;
     "malikt")
         VERSION_FILE="version-malikt.php"
