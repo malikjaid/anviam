@@ -3,9 +3,11 @@
 # Fetch all tags from remote
 git fetch --tags
 
-INITIAL_VERSION="1010110.0.1"         # Set this to "2.0.0" only for the first run
+# Check if an initial version is set via an environment variable or a specific file
+INITIAL_VERSION="90000.0.0"         # Set this to "2.0.0" only for the first run
 VERSION_FILE="version.php"
 
+# Use the initial version if specified; otherwise, continue from the latest tag
 if [ -n "$INITIAL_VERSION" ]; then
     NEW_VERSION="$INITIAL_VERSION"
     # Reset INITIAL_VERSION after the first run
@@ -61,3 +63,19 @@ git push origin "$CURRENT_BRANCH"
 # Tag and create a new release
 git tag -a "$NEW_TAG" -m "$NEW_TAG"
 git push origin "$NEW_TAG"
+
+# Create release notes
+RELEASE_BODY=$(conventional-changelog -p angular -i CHANGELOG.md -s -r 0)
+
+# Fetch the latest commit messages since the last tag, excluding version.php updates
+COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges | grep -v "chore: Update version to")
+
+# Combine the release notes and commit messages, ensuring proper formatting
+if [[ -z "$COMMITS" ]]; then
+    RELEASE_NOTES="$RELEASE_BODY"
+else
+    RELEASE_NOTES="$RELEASE_BODY"$'\n\n'"$COMMITS"
+fi
+
+# Create a new release with the combined notes
+gh release create "$NEW_TAG" --notes "$RELEASE_NOTES"
