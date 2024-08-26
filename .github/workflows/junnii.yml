@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - malikt
+  workflow_dispatch:
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18' # Use a more recent version of Node.js
+
+    - name: Install conventional-changelog
+      run: npm install -g conventional-changelog-cli
+
+    - name: Install GitHub CLI
+      run: sudo apt-get install gh
+
+    - name: Set up Git
+      run: |
+        git fetch --tags
+        git config user.email "conventional.changelog.action@github.com"
+        git config user.name "Conventional Changelog Action"
+
+    - name: Make the script executable
+      run: chmod +x increment_version.sh
+
+    - name: Increment version and create release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./increment_version.sh
