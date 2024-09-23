@@ -49,7 +49,7 @@ git push origin "$NEW_TAG"
 # RELEASE_BODY=$(conventional-changelog -p angular -i CHANGELOG.md -s -r 0)
 
 # # Fetch the latest commit messages since the last tag
-# COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges)
+COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges)
 
 # # Combine the release notes and commit messages, ensuring proper formatting
 # if [[ -z "$COMMITS" ]]; then
@@ -59,4 +59,4 @@ git push origin "$NEW_TAG"
 # fi
 
 # # Create a new release with the combined notes
-gh release create "$NEW_TAG"
+gh release create "$NEW_TAG" "$COMMITS"
