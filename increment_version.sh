@@ -59,4 +59,4 @@ git push origin "$NEW_TAG"
 # fi
 
 # # Create a new release with the combined notes
-# gh release create "$NEW_TAG" --notes "$RELEASE_NOTES"
+gh release create "$NEW_TAG"
