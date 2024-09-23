@@ -33,10 +33,10 @@ fi
 NEW_TAG="v$NEW_VERSION"
 
 # Check if the new tag already exists and handle the error
-# if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-#     echo "Error: Tag '$NEW_TAG' already exists."
-#     exit 1
-# fi
+if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+    echo "Error: Tag '$NEW_TAG' already exists."
+    exit 1
+fi
 
 # Determine the current branch
 CURRENT_BRANCH=$(git branch --show-current)
