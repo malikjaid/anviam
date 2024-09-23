@@ -59,4 +59,4 @@ COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h %s" --no-merges)
 # fi
 
 # # Create a new release with the combined notes
-gh release create "$NEW_TAG" "$COMMITS"
+gh release create "$NEW_TAG" --notes "$COMMITS"
